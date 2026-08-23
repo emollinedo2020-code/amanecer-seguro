@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amanecer Seguro · Chequeo diario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#16223f;--navy-2:#1f2f56;--amber:#f5a623;--amber-deep:#d9860a;--cream:#faf7f0;--slate:#5b6478;--green:#2f9e44;--red:#e4572e;--line:#e7e2d6;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--cream);font-family:'Inter',sans-serif;color:var(--navy);-webkit-font-smoothing:antialiased;}
+.display{font-family:'Space Grotesk',sans-serif;}
+.horizon{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 55%,var(--amber-deep) 100%);color:#fff;padding:26px 20px 40px;text-align:center;}
+.horizon h1{font-size:20px;margin:0;}
+main{max-width:480px;margin:-20px auto 30px;padding:0 16px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(22,34,63,.05);}
+.step{display:none;} .step.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.greeting{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;margin:4px 0;}
+.sub{color:var(--slate);font-size:13px;margin-bottom:16px;}
+.q-icon{font-size:30px;margin-bottom:4px;}
+.question{font-size:15px;font-weight:600;margin:16px 0 12px;}
+.yn{display:flex;gap:10px;}
+.yn button{flex:1;padding:14px;font-size:14px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--navy);cursor:pointer;}
+.yn button.yes.picked{background:var(--green);border-color:var(--green);color:#fff;}
+.yn button.no.picked{background:var(--red);border-color:var(--red);color:#fff;}
+button.primary{width:100%;background:var(--navy);color:#fff;border:none;border-radius:9px;padding:13px;font-weight:600;font-size:14px;cursor:pointer;}
+button.primary:disabled{opacity:.6;}
+.final-box{background:linear-gradient(180deg,var(--navy),var(--navy-2));color:#fff;border-radius:12px;padding:20px;text-align:center;}
+.final-box .big{font-size:32px;}
+.final-box p{font-size:13.5px;line-height:1.6;color:#e8ecf7;}
+.dots{display:flex;gap:6px;margin-bottom:14px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+.dot.done{background:var(--amber);} .dot.current{background:var(--navy);}
+.already .check{width:52px;height:52px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px;}
+.error{text-align:center;color:var(--slate);padding:20px 10px;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="horizon"><h1 class="display">🌅 Amanecer Seguro</h1></div>
+<main><div class="card" id="cardRoot">
+
+<div class="error" id="errorState" style="display:none;">Falta tu nombre en el enlace. Pídele a tu líder que te comparta el enlace correcto desde WhatsApp.</div>
+
+<div id="alreadyState" style="display:none;" class="already">
+  <div class="check">✓</div>
+  <div class="greeting" id="alreadyName"></div>
+  <div class="sub">Ya registraste tu chequeo de hoy. ¡Buen turno!</div>
+</div>
+
+<div id="flow" style="display:none;">
+  <div class="dots" id="dots"></div>
+  <div class="step active" id="step0">
+    <div class="greeting" id="greetingText"></div>
+    <div class="sub">Antes de salir, hagamos el chequeo de siempre.</div>
+    <button class="primary" onclick="nextStep()">Comenzar</button>
+  </div>
+  <div class="step" id="step1">
+    <div class="q-icon">🛌</div>
+    <div class="question">¿Descansaste bien anoche?</div>
+    <div class="yn"><button class="yes" onclick="answer('descanso','Si',this)">Sí</button><button class="no" onclick="answer('descanso','No',this)">No</button></div>
+  </div>
+  <div class="step" id="step2">
+    <div class="q-icon">✅</div>
+    <div class="question">¿Ya estás listo para salir a trabajar?</div>
+    <div class="yn"><button class="yes" onclick="answer('listo','Si',this)">Sí</button><button class="no" onclick="answer('listo','No',this)">No</button></div>
+  </div>
+  <div class="step" id="step3">
+    <div class="q-icon">🚗</div>
+    <div class="question">¿Ya revisaste tu vehículo? ¿Está todo en orden?</div>
+    <div class="yn"><button class="yes" onclick="answer('vehiculo','Si',this)">Sí</button><button class="no" onclick="answer('vehiculo','No',this)">No</button></div>
+  </div>
+  <div class="step" id="step4">
+    <div class="q-icon">🧰</div>
+    <div class="question">¿Ya revisaste tu equipo de trabajo?</div>
+    <div class="yn"><button class="yes" onclick="answer('equipo','Si',this)">Sí</button><button class="no" onclick="answer('equipo','No',this)">No</button></div>
+  </div>
+  <div class="step" id="step5">
+    <div class="final-box">
+      <div class="big">🌅</div>
+      <div class="display" style="font-size:16px;">Estás en óptimas condiciones. ¡A trabajar!</div>
+      <p>Que Dios te acompañe y te traiga con seguridad a casa.<br>Recuerda que tu familia te espera. 🙏</p>
+    </div>
+    <button class="primary" id="submitBtn" style="margin-top:14px;" onclick="submitCheckin()">Confirmar chequeo</button>
+  </div>
+</div>
+
+</div></main>
+
+<script>
+const FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSfMfrnAy6GeLu1D9elc0bpSOW85S1CIJvFGE-D-v4rygbwQ1g/formResponse";
+const ENTRY_NOMBRE = "entry.2002538580";
+const ENTRY_DESCANSO = "entry.1573616343";
+const ENTRY_LISTO = "entry.1954272256";
+const ENTRY_VEHICULO = "entry.1416525607";
+const ENTRY_EQUIPO = "entry.60978597";
+
+const params = new URLSearchParams(location.search);
+const nombre = (params.get('nombre') || '').trim();
+const todayKey = new Date().toISOString().slice(0,10);
+const storageKey = 'chequeo_' + todayKey + '_' + nombre;
+
+let answers = {};
+let currentStep = 0;
+const STEP_IDS = ['step0','step1','step2','step3','step4','step5'];
+
+function hashCode(s){let h=0;for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;}return Math.abs(h);}
+const GREETINGS = ['Buenos días, {n}. ¿Qué tal amaneciste hoy?','¡Hola, {n}! Buen día. ¿Cómo amaneciste?','Buen día, {n}. Espero que hayas amanecido bien.'];
+
+function init(){
+  if(!nombre){ document.getElementById('errorState').style.display='block'; return; }
+  const done = localStorage.getItem(storageKey);
+  if(done){
+    document.getElementById('alreadyName').textContent = nombre;
+    document.getElementById('alreadyState').style.display='block';
+    return;
+  }
+  const seed = hashCode(nombre+todayKey);
+  document.getElementById('greetingText').textContent = GREETINGS[seed % GREETINGS.length].replace('{n}', nombre);
+  document.getElementById('flow').style.display='block';
+  renderDots();
+}
+function renderDots(){
+  document.getElementById('dots').innerHTML = STEP_IDS.slice(0,5).map((_,i)=>{
+    let c='dot'; if(i<currentStep)c+=' done'; if(i===currentStep)c+=' current'; return `<div class="${c}"></div>`;
+  }).join('');
+}
+function nextStep(){
+  document.getElementById(STEP_IDS[currentStep]).classList.remove('active');
+  currentStep++;
+  document.getElementById(STEP_IDS[currentStep]).classList.add('active');
+  renderDots();
+}
+function answer(field,value,btn){
+  answers[field]=value;
+  [...btn.parentElement.children].forEach(b=>b.classList.remove('picked'));
+  btn.classList.add('picked');
+  setTimeout(nextStep,300);
+}
+function submitCheckin(){
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const fd = new FormData();
+  fd.append(ENTRY_NOMBRE, nombre);
+  fd.append(ENTRY_DESCANSO, answers.descanso || '');
+  fd.append(ENTRY_LISTO, answers.listo || '');
+  fd.append(ENTRY_VEHICULO, answers.vehiculo || '');
+  fd.append(ENTRY_EQUIPO, answers.equipo || '');
+  fetch(FORM_ACTION, { method:'POST', mode:'no-cors', body: fd })
+    .then(()=>{
+      localStorage.setItem(storageKey, '1');
+      document.getElementById('flow').style.display='none';
+      document.getElementById('alreadyName').textContent = nombre;
+      document.getElementById('alreadyState').style.display='block';
+    })
+    .catch(()=>{
+      btn.disabled=false; btn.textContent='Confirmar chequeo';
+      alert('No se pudo enviar. Revisa tu conexión e intenta de nuevo.');
+    });
+}
+init();
+</script>
+</body>
+</html>
