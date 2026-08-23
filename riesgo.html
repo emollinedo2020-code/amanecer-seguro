@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amanecer Seguro · Reportar riesgo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#16223f;--navy-2:#1f2f56;--amber:#f5a623;--amber-deep:#d9860a;--cream:#faf7f0;--slate:#5b6478;--green:#2f9e44;--red:#e4572e;--line:#e7e2d6;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--cream);font-family:'Inter',sans-serif;color:var(--navy);-webkit-font-smoothing:antialiased;}
+.display{font-family:'Space Grotesk',sans-serif;}
+.horizon{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 55%,var(--red) 100%);color:#fff;padding:26px 20px 40px;text-align:center;}
+.horizon h1{font-size:20px;margin:0;}
+.horizon p{font-size:12.5px;color:#e8d9d4;margin:6px 0 0;}
+main{max-width:480px;margin:-20px auto 30px;padding:0 16px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(22,34,63,.05);}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;}
+label:first-of-type{margin-top:0;}
+input[type=text], textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:var(--cream);color:var(--navy);}
+textarea{min-height:100px;resize:vertical;}
+button.primary{width:100%;background:var(--red);color:#fff;border:none;border-radius:9px;padding:13px;font-weight:600;font-size:14px;cursor:pointer;margin-top:18px;}
+button.primary:disabled{opacity:.6;}
+.final-box{background:linear-gradient(180deg,var(--navy),var(--navy-2));color:#fff;border-radius:12px;padding:20px;text-align:center;}
+.final-box .big{font-size:32px;}
+.final-box p{font-size:13.5px;line-height:1.6;color:#e8ecf7;}
+.hint{font-size:11.5px;color:var(--slate);margin:4px 0 0;}
+</style>
+</head>
+<body>
+<div class="horizon"><h1 class="display">⚠️ Reportar riesgo</h1><p>Si ves algo inseguro, repórtalo aquí</p></div>
+<main><div class="card">
+
+<div id="formView">
+  <label>Tu nombre</label>
+  <input type="text" id="fNombre" readonly>
+  <label>Ubicación</label>
+  <input type="text" id="fUbicacion" placeholder="Ej. Zona 5, ruta hacia...">
+  <label>¿Qué viste?</label>
+  <textarea id="fDescripcion" placeholder="Describe lo que viste..."></textarea>
+  <p class="hint">Si quieres adjuntar una foto, envíasela directamente a tu líder por WhatsApp además de este reporte.</p>
+  <button class="primary" id="submitBtn" onclick="submitRisk()">Enviar reporte</button>
+</div>
+
+<div id="doneView" style="display:none;">
+  <div class="final-box">
+    <div class="big">✅</div>
+    <div class="display" style="font-size:16px;">¡Gracias por reportarlo!</div>
+    <p>Tu reporte puede evitar un accidente. El equipo de seguridad lo revisará.</p>
+  </div>
+</div>
+
+</div></main>
+
+<script>
+const FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSdMbuK7dqAoPdhfKxGcB0GE9BA8kiXTr51VDNYWVtnCdBn2OQ/formResponse";
+const ENTRY_NOMBRE = "entry.573440308";
+const ENTRY_UBICACION = "entry.1584112106";
+const ENTRY_DESCRIPCION = "entry.431007645";
+
+const params = new URLSearchParams(location.search);
+const nombre = (params.get('nombre') || '').trim();
+document.getElementById('fNombre').value = nombre || '(escribe tu nombre en el enlace)';
+
+function submitRisk(){
+  const ubicacion = document.getElementById('fUbicacion').value.trim();
+  const descripcion = document.getElementById('fDescripcion').value.trim();
+  if(!ubicacion || !descripcion){ alert('Completa ubicación y descripción.'); return; }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  const fd = new FormData();
+  fd.append(ENTRY_NOMBRE, nombre);
+  fd.append(ENTRY_UBICACION, ubicacion);
+  fd.append(ENTRY_DESCRIPCION, descripcion);
+  fetch(FORM_ACTION, { method:'POST', mode:'no-cors', body: fd })
+    .then(()=>{
+      document.getElementById('formView').style.display='none';
+      document.getElementById('doneView').style.display='block';
+    })
+    .catch(()=>{
+      btn.disabled=false; btn.textContent='Enviar reporte';
+      alert('No se pudo enviar. Revisa tu conexión e intenta de nuevo.');
+    });
+}
+</script>
+</body>
+</html>
