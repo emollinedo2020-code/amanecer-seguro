@@ -30,6 +30,7 @@ button.primary:disabled{opacity:.6;}
 .final-box{background:linear-gradient(180deg,var(--navy),var(--navy-2));color:#fff;border-radius:12px;padding:20px;text-align:center;}
 .final-box .big{font-size:32px;}
 .final-box p{font-size:13.5px;line-height:1.6;color:#e8ecf7;}
+.final-box.alert{background:linear-gradient(180deg,var(--red),#a83d20);}
 .dots{display:flex;gap:6px;margin-bottom:14px;}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
 .dot.done{background:var(--amber);} .dot.current{background:var(--navy);}
@@ -77,10 +78,10 @@ button.primary:disabled{opacity:.6;}
     <div class="yn"><button class="yes" onclick="answer('equipo','Si',this)">Sí</button><button class="no" onclick="answer('equipo','No',this)">No</button></div>
   </div>
   <div class="step" id="step5">
-    <div class="final-box">
-      <div class="big">🌅</div>
-      <div class="display" style="font-size:16px;">Estás en óptimas condiciones. ¡A trabajar!</div>
-      <p>Que Dios te acompañe y te traiga con seguridad a casa.<br>Recuerda que tu familia te espera. 🙏</p>
+    <div class="final-box" id="finalBox">
+      <div class="big" id="finalIcon">🌅</div>
+      <div class="display" id="finalTitle" style="font-size:16px;">Estás en óptimas condiciones. ¡A trabajar!</div>
+      <p id="finalText">Que Dios te acompañe y te traiga con seguridad a casa.<br>Recuerda que tu familia te espera. 🙏</p>
     </div>
     <button class="primary" id="submitBtn" style="margin-top:14px;" onclick="submitCheckin()">Confirmar chequeo</button>
   </div>
@@ -129,8 +130,24 @@ function renderDots(){
 function nextStep(){
   document.getElementById(STEP_IDS[currentStep]).classList.remove('active');
   currentStep++;
+  if(currentStep === 5){ renderFinalStep(); }
   document.getElementById(STEP_IDS[currentStep]).classList.add('active');
   renderDots();
+}
+function renderFinalStep(){
+  const hasNo = Object.values(answers).some(v => v === 'No');
+  const box = document.getElementById('finalBox');
+  if(hasNo){
+    box.classList.add('alert');
+    document.getElementById('finalIcon').textContent = '⚠️';
+    document.getElementById('finalTitle').textContent = 'No te encuentras en condiciones óptimas';
+    document.getElementById('finalText').innerHTML = 'Repórtaselo a tu líder antes de salir a trabajar.<br>Tu seguridad primero — no hay prisa que valga un riesgo. 🙏';
+  } else {
+    box.classList.remove('alert');
+    document.getElementById('finalIcon').textContent = '🌅';
+    document.getElementById('finalTitle').textContent = 'Estás en óptimas condiciones. ¡A trabajar!';
+    document.getElementById('finalText').innerHTML = 'Que Dios te acompañe y te traiga con seguridad a casa.<br>Recuerda que tu familia te espera. 🙏';
+  }
 }
 function answer(field,value,btn){
   answers[field]=value;
