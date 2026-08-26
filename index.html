@@ -80,6 +80,17 @@ button.primary:disabled{opacity:.6;}
     <div class="yn"><button class="yes" onclick="answer('equipo','Si',this)">Sí</button><button class="no" onclick="answer('equipo','No',this)">No</button></div>
   </div>
   <div class="step" id="step5">
+    <div class="q-icon">💭</div>
+    <div class="question">¿Tienes algún problema personal que te afecte el día de hoy?</div>
+    <div class="yn"><button class="yes" onclick="answer('personal','Si',this)">Sí</button><button class="no" onclick="answer('personal','No',this)">No</button></div>
+  </div>
+  <div class="step" id="step6">
+    <div class="q-icon">📝</div>
+    <div class="question">¿Tienes algo adicional que reportar?</div>
+    <textarea id="adicionalInput" placeholder="Escribe aquí (opcional)" style="width:100%;min-height:90px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:var(--cream);color:var(--navy);resize:vertical;box-sizing:border-box;"></textarea>
+    <button class="primary" style="margin-top:14px;" onclick="answer('adicional', document.getElementById('adicionalInput').value.trim(), null)">Continuar</button>
+  </div>
+  <div class="step" id="step7">
     <div class="final-box" id="finalBox">
       <div class="big" id="finalIcon">🌅</div>
       <div class="display" id="finalTitle" style="font-size:16px;">Estás en óptimas condiciones. ¡A trabajar!</div>
@@ -99,6 +110,8 @@ const ENTRY_DESCANSO = "entry.1573616343";
 const ENTRY_LISTO = "entry.1954272256";
 const ENTRY_VEHICULO = "entry.1416525607";
 const ENTRY_EQUIPO = "entry.60978597";
+const ENTRY_PERSONAL = "entry.1589099546";
+const ENTRY_ADICIONAL = "entry.1408502535";
 
 const params = new URLSearchParams(location.search);
 const nombre = (params.get('nombre') || '').trim();
@@ -107,7 +120,7 @@ const storageKey = 'chequeo_' + todayKey + '_' + nombre;
 
 let answers = {};
 let currentStep = 0;
-const STEP_IDS = ['step0','step1','step2','step3','step4','step5'];
+const STEP_IDS = ['step0','step1','step2','step3','step4','step5','step6','step7'];
 
 function hashCode(s){let h=0;for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;}return Math.abs(h);}
 const GREETINGS = ['Buenos días, {n}. ¿Qué tal amaneciste hoy?','¡Hola, {n}! Buen día. ¿Cómo amaneciste?','Buen día, {n}. Espero que hayas amanecido bien.'];
@@ -126,21 +139,21 @@ function init(){
   renderDots();
 }
 function renderDots(){
-  document.getElementById('dots').innerHTML = STEP_IDS.slice(0,5).map((_,i)=>{
+  document.getElementById('dots').innerHTML = STEP_IDS.slice(0,7).map((_,i)=>{
     let c='dot'; if(i<currentStep)c+=' done'; if(i===currentStep)c+=' current'; return `<div class="${c}"></div>`;
   }).join('');
 }
 function nextStep(){
   document.getElementById(STEP_IDS[currentStep]).classList.remove('active');
   currentStep++;
-  if(currentStep === 5){ renderFinalStep(); }
+  if(currentStep === 7){ renderFinalStep(); }
   document.getElementById(STEP_IDS[currentStep]).classList.add('active');
   renderDots();
 }
 function renderFinalStep(){
-  const hasNo = Object.values(answers).some(v => v === 'No');
+  const hasRisk = Object.entries(answers).some(([k,v]) => (k !== 'personal' && v === 'No') || (k === 'personal' && v === 'Si'));
   const box = document.getElementById('finalBox');
-  if(hasNo){
+  if(hasRisk){
     box.classList.add('alert');
     document.getElementById('finalIcon').textContent = '⚠️';
     document.getElementById('finalTitle').textContent = 'No te encuentras en condiciones óptimas';
@@ -154,9 +167,11 @@ function renderFinalStep(){
 }
 function answer(field,value,btn){
   answers[field]=value;
-  [...btn.parentElement.children].forEach(b=>b.classList.remove('picked'));
-  btn.classList.add('picked');
-  setTimeout(nextStep,300);
+  if(btn){
+    [...btn.parentElement.children].forEach(b=>b.classList.remove('picked'));
+    btn.classList.add('picked');
+  }
+  setTimeout(nextStep,btn?300:0);
 }
 function submitCheckin(){
   const btn = document.getElementById('submitBtn');
@@ -167,6 +182,8 @@ function submitCheckin(){
   fd.append(ENTRY_LISTO, answers.listo || '');
   fd.append(ENTRY_VEHICULO, answers.vehiculo || '');
   fd.append(ENTRY_EQUIPO, answers.equipo || '');
+  fd.append(ENTRY_PERSONAL, answers.personal || '');
+  fd.append(ENTRY_ADICIONAL, answers.adicional || '');
   fetch(FORM_ACTION, { method:'POST', mode:'no-cors', body: fd })
     .then(()=>{
       localStorage.setItem(storageKey, '1');
