@@ -225,6 +225,15 @@ Tu reporte puede evitar un accidente. Gracias por cuidar al equipo 🙏</textare
       </div>
       <p class="hint">Este enlace no cambia día a día — compártelo una vez y que lo guarden, o reenvíalo cuando quieras recordárselos.</p>
     </div>
+
+    <div class="card">
+      <h2>Reportes recibidos <button class="btn-ghost btn-sm" id="refreshRiskBtn" onclick="loadRiskSheetAndRender()">🔄 Actualizar</button></h2>
+      <table>
+        <thead><tr><th>Nombre</th><th>Ubicación</th><th>Qué vio</th><th>Fecha</th></tr></thead>
+        <tbody id="riskTableBody"><tr><td colspan="4" class="empty-row">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+
     <div class="card">
       <h2>Enviar individual</h2>
       <div id="contactsListRisk"></div>
@@ -426,13 +435,14 @@ function loadSheetAndRender(){
   if(old) old.remove();
   const s = document.createElement('script');
   s.id = 'gvizScript';
-  s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&_=${Date.now()}`;
+  s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:onMainSheetResponse&_=${Date.now()}`;
   s.onerror = function(){
     btn.disabled = false; btn.textContent = '🔄 Actualizar';
     toast('No se pudo conectar con la Hoja. Verifica que sea pública ("Cualquiera con el enlace, Lector").');
   };
   document.body.appendChild(s);
 }
+function onMainSheetResponse(data){ onSheetData(data); }
 
 function onSheetData(data){
   const btn = document.getElementById('refreshBtn');
@@ -556,5 +566,51 @@ startSendAll = function(onlyPending){
 };
 
 loadSheetAndRender();
+
+/* ---------------- reportes de riesgo ---------------- */
+const RISK_SHEET_ID = "10K1rnkKnnJGjRRnHZHoq_mP0yZntNDqBi4l6Iymjjlg";
+
+function loadRiskSheetAndRender(){
+  const btn = document.getElementById('refreshRiskBtn');
+  btn.disabled = true; btn.textContent = 'Actualizando…';
+  const old = document.getElementById('gvizRiskScript');
+  if(old) old.remove();
+  const s = document.createElement('script');
+  s.id = 'gvizRiskScript';
+  s.src = `https://docs.google.com/spreadsheets/d/${RISK_SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:onRiskSheetResponse&_=${Date.now()}`;
+  s.onerror = function(){
+    btn.disabled = false; btn.textContent = '🔄 Actualizar';
+    toast('No se pudo conectar con la Hoja de riesgo. Verifica que sea pública.');
+  };
+  document.body.appendChild(s);
+}
+function onRiskSheetResponse(data){ onRiskSheetData(data); }
+
+function onRiskSheetData(data){
+  const btn = document.getElementById('refreshRiskBtn');
+  btn.disabled = false; btn.textContent = '🔄 Actualizar';
+  try{
+    const rows = (data.table.rows || []).map(r=>{
+      const c = r.c || [];
+      const get = i => (c[i] ? (c[i].f !== undefined && c[i].f !== null ? c[i].f : (c[i].v||'')) : '');
+      return { ts: get(0), nombre: get(1), ubicacion: get(2), descripcion: get(3) };
+    }).filter(r => r.nombre);
+
+    rows.sort((a,b)=>{
+      const pa = Date.parse(a.ts.split('/').reverse().join('-')) || 0;
+      const pb = Date.parse(b.ts.split('/').reverse().join('-')) || 0;
+      return pb - pa;
+    });
+
+    document.getElementById('riskTableBody').innerHTML = rows.length
+      ? rows.map(r=>`<tr><td class="t-name">${r.nombre}</td><td>${r.ubicacion}</td><td>${r.descripcion}</td><td class="t-time">${r.ts}</td></tr>`).join('')
+      : '<tr><td colspan="4" class="empty-row">Aún no hay reportes.</td></tr>';
+    toast('Reportes actualizados');
+  }catch(e){
+    toast('No se pudieron leer los reportes');
+  }
+}
+
+loadRiskSheetAndRender();
 </script>
 </body></html>
