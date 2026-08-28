@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <title>Amanecer Seguro · Panel del líder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -129,6 +130,7 @@ footer{text-align:center;font-size:11px;color:var(--slate);padding:4px 0 10px;}
   <div class="panel active" id="metricsPanel">
     <div class="row" style="margin-top:0;">
       <button class="btn-primary btn-sm" id="refreshBtn" onclick="loadSheetAndRender()">🔄 Actualizar</button>
+      <button class="btn-ghost btn-sm" onclick="exportExcel()">📥 Descargar Excel</button>
       <button class="btn-ghost btn-sm" onclick="window.print()">🖨️ Exportar / Imprimir PDF</button>
     </div>
     <div class="card gauge-card" style="margin-top:12px;">
@@ -459,6 +461,7 @@ function onSheetData(data){
         personal: getf(6), adicional: getf(7)
       };
     }).filter(r => r.nombre);
+    window.__checkinRows = rows;
     renderMetrics(rows);
     toast('Datos actualizados');
   }catch(e){
@@ -616,6 +619,7 @@ function onRiskSheetData(data){
     document.getElementById('riskTableBody').innerHTML = rows.length
       ? rows.map(r=>`<tr><td class="t-name">${r.nombre}</td><td>${r.ubicacion}</td><td>${r.descripcion}</td><td class="t-time">${r.ts}</td></tr>`).join('')
       : '<tr><td colspan="4" class="empty-row">Aún no hay reportes.</td></tr>';
+    window.__riskRows = rows;
     toast('Reportes actualizados');
   }catch(e){
     toast('No se pudieron leer los reportes');
@@ -623,5 +627,31 @@ function onRiskSheetData(data){
 }
 
 loadRiskSheetAndRender();
+
+/* ---------------- descargar Excel con ambas hojas ---------------- */
+function exportExcel(){
+  if(typeof XLSX === 'undefined'){ toast('Cargando librería, intenta de nuevo en un segundo'); return; }
+  const checkinRows = window.__checkinRows || [];
+  const riskRows = window.__riskRows || [];
+  if(!checkinRows.length && !riskRows.length){ toast('Aún no hay datos cargados'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  const headers1 = ['Marca temporal','Nombre','Descansó bien','Listo para salir','Vehículo en orden','Equipo en orden','Problema personal','Nota adicional'];
+  const data1 = checkinRows.map(r=>[r.tsFmt, r.nombre, r.descanso, r.listo, r.vehiculo, r.equipo, r.personal||'', r.adicional||'']);
+  const ws1 = XLSX.utils.aoa_to_sheet([headers1, ...data1]);
+  ws1['!cols'] = [{wch:17},{wch:32},{wch:13},{wch:15},{wch:15},{wch:14},{wch:15},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Chequeo diario');
+
+  const headers2 = ['Marca temporal','Nombre','Ubicación','Qué vio'];
+  const data2 = riskRows.map(r=>[r.ts, r.nombre, r.ubicacion, r.descripcion]);
+  const ws2 = XLSX.utils.aoa_to_sheet([headers2, ...data2]);
+  ws2['!cols'] = [{wch:17},{wch:28},{wch:18},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Reportes de riesgo');
+
+  const fecha = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `Amanecer_Seguro_${fecha}.xlsx`);
+  toast('Excel descargado');
+}
 </script>
 </body></html>
