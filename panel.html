@@ -19,7 +19,9 @@ body{margin:0;background:var(--cream);font-family:'Inter',sans-serif;color:var(-
 .tabs{position:relative;display:flex;gap:10px;margin-top:22px;max-width:520px;}
 .tab{flex:1;text-align:center;padding:11px 8px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#eef1fb;font-size:13.5px;font-weight:600;cursor:pointer;}
 .tab.active{background:var(--amber);border-color:var(--amber);color:var(--navy);}
-main{max-width:680px;margin:-28px auto 44px;padding:0 16px;}
+main{max-width:680px;margin:0 auto 44px;padding:0 16px;}
+main .row:first-child{margin-top:18px;}
+.gauge-card{margin-top:-28px;}
 #metricsPanel{max-width:1180px;}
 #sendPanel, #riskPanel{max-width:680px;margin:0 auto;}
 .panel{display:none;} .panel.active{display:block;}
@@ -140,7 +142,7 @@ footer{text-align:center;font-size:11px;color:var(--slate);padding:4px 0 10px;}
       <button class="btn-ghost btn-sm" onclick="exportExcel()">📥 Descargar Excel</button>
       <button class="btn-ghost btn-sm" onclick="window.print()">🖨️ Exportar / Imprimir PDF</button>
     </div>
-    <div class="card gauge-card" style="margin-top:12px;">
+    <div class="card gauge-card">
       <svg width="180" height="100" viewBox="0 0 200 110">
         <path d="M 20.0 100.0 A 80 80 0 1 1 180.0 100.0" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
         <path id="gaugeArcPath" d="M 20.0 100.0 A 80 80 0 0 1 20.0 100.0" fill="none" stroke="var(--amber)" stroke-width="14" stroke-linecap="round"/>
