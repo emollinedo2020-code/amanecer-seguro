@@ -31,7 +31,7 @@ main{max-width:680px;margin:-28px auto 44px;padding:0 16px;}
 .gauge-text{flex:1;min-width:200px;}
 .gauge-text h3{font-size:19px;margin:0 0 6px;font-family:'Space Grotesk',sans-serif;}
 .gauge-text p{font-size:13.5px;color:var(--slate);margin:0;line-height:1.6;}
-.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:18px;}
 .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 14px;text-align:center;box-shadow:0 2px 10px rgba(22,34,63,.04);}
 .kpi .n{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;}
 .kpi .l{font-size:11.5px;color:var(--slate);margin-top:4px;letter-spacing:.02em;}
@@ -46,6 +46,11 @@ th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05e
 td{padding:10px;border-bottom:1px solid var(--line);}
 .t-name{font-weight:600;} .t-time{font-family:'IBM Plex Mono',monospace;color:var(--slate);}
 .empty-row{text-align:center;color:var(--slate);padding:22px 10px;font-size:13px;}
+.comment-row{padding:14px 0;border-bottom:1px solid var(--line);}
+.comment-row:last-child{border-bottom:none;}
+.comment-head{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:5px;}
+.comment-head .t-time{font-weight:400;}
+.comment-text{font-size:13.5px;color:var(--navy);line-height:1.5;}
 textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--cream);color:var(--navy);resize:vertical;}
 .hint{font-size:11.5px;color:var(--slate);margin:6px 0 0;}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:none;border-radius:9px;padding:10px 14px;cursor:pointer;}
@@ -88,7 +93,8 @@ footer{text-align:center;font-size:11px;color:var(--slate);padding:4px 0 10px;}
       "gauge  gauge"
       "kpis   kpis"
       "trend  ranking"
-      "bars   table"
+      "bars   comments"
+      "table  table"
       "note   note";
     gap:20px;
     align-items:start;
@@ -98,6 +104,7 @@ footer{text-align:center;font-size:11px;color:var(--slate);padding:4px 0 10px;}
   #cardTrend{grid-area:trend;}
   #cardRanking{grid-area:ranking;}
   #cardBars{grid-area:bars;}
+  #cardComments{grid-area:comments;}
   #cardTable{grid-area:table;}
   #metricsNote{grid-area:note;}
   .kpi-row{grid-area:kpis;grid-column:auto;margin-bottom:0;}
@@ -146,9 +153,13 @@ footer{text-align:center;font-size:11px;color:var(--slate);padding:4px 0 10px;}
       </div>
     </div>
     <div class="kpi-row">
-      <div class="kpi"><div class="n" id="kpiTotal">–</div><div class="l">Respuestas totales</div></div>
-      <div class="kpi alert"><div class="n" id="kpiAlert">–</div><div class="l">Alertas ("No")</div></div>
+      <div class="kpi"><div class="n" id="kpiTotal">–</div><div class="l">Respuestas hoy</div></div>
+      <div class="kpi alert"><div class="n" id="kpiAlert">–</div><div class="l">Alertas hoy</div></div>
       <div class="kpi"><div class="n" id="kpiPending">–</div><div class="l">Pendientes hoy</div></div>
+      <div class="kpi"><div class="n" id="kpiWeekAvg">–</div><div class="l">Cumplimiento prom. 7 días</div></div>
+      <div class="kpi"><div class="n" id="kpiPersonalToday">–</div><div class="l">Problema personal hoy</div></div>
+      <div class="kpi"><div class="n" id="kpiHistTotal">–</div><div class="l">Respuestas históricas</div></div>
+      <div class="kpi"><div class="n" id="kpiRiskReports">–</div><div class="l">Reportes de riesgo</div></div>
     </div>
 
     <div class="card" id="cardTrend">
@@ -162,8 +173,12 @@ footer{text-align:center;font-size:11px;color:var(--slate);padding:4px 0 10px;}
     </div>
 
     <div class="card" id="cardBars">
-      <h2>Respuestas por pregunta</h2>
+      <h2>Respuestas por pregunta (hoy)</h2>
       <div id="barsBody"></div>
+    </div>
+    <div class="card" id="cardComments">
+      <h2>💬 Comentarios del equipo <span class="hint" style="margin:0;">"Algo adicional que reportar"</span></h2>
+      <div id="commentsBody"><div class="empty-row">Cargando…</div></div>
     </div>
     <div class="card" id="cardTable">
       <h2>Últimas respuestas</h2>
@@ -508,6 +523,8 @@ function renderMetrics(rows){
   document.getElementById('kpiTotal').textContent = totalResp;
   document.getElementById('kpiAlert').textContent = alertasHoy;
   document.getElementById('kpiPending').textContent = pendientesN;
+  document.getElementById('kpiPersonalToday').textContent = rowsToday.filter(r=>r.personal==='Si').length;
+  document.getElementById('kpiHistTotal').textContent = rows.length;
   document.getElementById('gaugeNumText').textContent = pctHoy + '%';
   document.getElementById('gaugeSubText').textContent = `${confirmedToday.size} de ${total} confirmaron`;
 
@@ -537,6 +554,7 @@ function renderMetrics(rows){
   // tendencia semanal
   const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   let trendHtml = '';
+  let weekPcts = [];
   for(let i=6;i>=0;i--){
     const d = new Date(today); d.setDate(today.getDate()-i);
     const count = new Set(rows.filter(r=>{
@@ -544,10 +562,25 @@ function renderMetrics(rows){
       return sameDay(rd,d) && CONTACT_SET.has(r.nombre);
     }).map(r=>r.nombre)).size;
     const pct = total ? Math.round((count/total)*100) : 0;
-    const h = Math.max(4, Math.round(100*pct/100*1.0));
+    weekPcts.push(pct);
     trendHtml += `<div class="tbar-col"><div class="tbar-val">${pct}%</div><div class="tbar" style="height:${Math.max(4,pct)}px"></div><div class="tbar-day">${dias[d.getDay()]}</div></div>`;
   }
   document.getElementById('trendRow').innerHTML = trendHtml;
+  const weekAvg = weekPcts.length ? Math.round(weekPcts.reduce((a,b)=>a+b,0)/weekPcts.length) : 0;
+  document.getElementById('kpiWeekAvg').textContent = weekAvg + '%';
+
+  // comentarios del equipo (respuestas de texto libre, más recientes primero)
+  const comentarios = rows
+    .filter(r => r.adicional && r.adicional.trim())
+    .slice()
+    .sort((a,b)=>{
+      const da = parseGvizDate(a.tsRaw), db = parseGvizDate(b.tsRaw);
+      return (db?db.getTime():0) - (da?da.getTime():0);
+    })
+    .slice(0,20);
+  document.getElementById('commentsBody').innerHTML = comentarios.length
+    ? comentarios.map(r=>`<div class="comment-row"><div class="comment-head"><span>${r.nombre}</span><span class="t-time">${r.tsFmt}</span></div><div class="comment-text">${r.adicional}</div></div>`).join('')
+    : '<div class="empty-row">Nadie ha escrito comentarios todavía.</div>';
 
   // últimas respuestas (con la nota adicional, si escribieron algo)
   const filas = rows.slice().sort((a,b)=>{
@@ -620,6 +653,7 @@ function onRiskSheetData(data){
       ? rows.map(r=>`<tr><td class="t-name">${r.nombre}</td><td>${r.ubicacion}</td><td>${r.descripcion}</td><td class="t-time">${r.ts}</td></tr>`).join('')
       : '<tr><td colspan="4" class="empty-row">Aún no hay reportes.</td></tr>';
     window.__riskRows = rows;
+    document.getElementById('kpiRiskReports').textContent = rows.length;
     toast('Reportes actualizados');
   }catch(e){
     toast('No se pudieron leer los reportes');
