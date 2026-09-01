@@ -53,6 +53,17 @@ td{padding:10px;border-bottom:1px solid var(--line);}
 .comment-head{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:5px;}
 .comment-head .t-time{font-weight:400;}
 .comment-text{font-size:13.5px;color:var(--navy);line-height:1.5;}
+.mgmt-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);}
+.mgmt-row:last-child{border-bottom:none;}
+.mgmt-info{flex:1;min-width:0;}
+.mgmt-name{font-weight:600;font-size:13.5px;}
+.mgmt-phone{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--slate);}
+.mgmt-actions{display:flex;gap:6px;flex-shrink:0;}
+.mgmt-actions button{padding:6px 9px;font-size:12px;border-radius:7px;}
+.mgmt-edit-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);}
+.mgmt-edit-row input{padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-size:13px;}
+.mgmt-edit-row input.name-input{flex:2;min-width:130px;}
+.mgmt-edit-row input.phone-input{flex:1;min-width:110px;}
 textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--cream);color:var(--navy);resize:vertical;}
 .hint{font-size:11.5px;color:var(--slate);margin:6px 0 0;}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:none;border-radius:9px;padding:10px 14px;cursor:pointer;}
@@ -216,13 +227,18 @@ Que Dios te acompañe y te traiga con seguridad a casa. Recuerda que tu familia 
     </div>
 
     <div class="card">
-      <h2>Agregar técnico</h2>
-      <div class="row" style="margin-top:0;">
-        <input type="text" id="newName" placeholder="Nombre completo" style="flex:2;min-width:140px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);font-size:13px;">
-        <input type="text" id="newPhone" placeholder="Teléfono con 502" style="flex:1;min-width:120px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);font-size:13px;">
+      <h2>📇 Gestionar contactos <span class="hint" style="margin:0;" id="contactCount"></span></h2>
+      <input type="text" id="contactSearch" placeholder="Buscar por nombre…" oninput="renderContactManager()" style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);font-size:13px;margin-bottom:12px;box-sizing:border-box;">
+      <div id="contactManagerList"></div>
+
+      <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px;">
+        <div class="row" style="margin-top:0;">
+          <input type="text" id="newName" placeholder="Nombre completo" style="flex:2;min-width:140px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);font-size:13px;">
+          <input type="text" id="newPhone" placeholder="Teléfono con 502" style="flex:1;min-width:120px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);font-size:13px;">
+        </div>
+        <div class="row"><button class="btn-primary btn-block" onclick="addContact()">+ Agregar nuevo contacto</button></div>
       </div>
-      <div class="row"><button class="btn-primary btn-block" onclick="addContact()">+ Agregar a la lista</button></div>
-      <p class="hint">Se guarda en este navegador y en este archivo mientras no lo cierres. Para que quede permanente en la próxima versión del panel, dile a Claude el nombre y número.</p>
+      <p class="hint">Los cambios se guardan en este navegador. Para que queden permanentes en la próxima versión del panel, dile a Claude qué cambió.</p>
     </div>
 
     <div class="card">
@@ -277,9 +293,17 @@ Tu reporte puede evitar un accidente. Gracias por cuidar al equipo 🙏</textare
 
 <script>
 const BASE_CONTACTS = [{"name": "Haroldo Chun Mendez", "phone": "50230024208"}, {"name": "Carlos Rene Higueros Ruiz", "phone": "50230534729"}, {"name": "Denis Eliseo Chaman Cucul", "phone": "50230522235"}, {"name": "Domingo Felipe Lancerio", "phone": "50230526885"}, {"name": "Erickson Waldemar Chocooj", "phone": "50230531351"}, {"name": "Erlin Styb Fernandez Catalan", "phone": "50230525386"}, {"name": "Francisco Javier Guerra Cu", "phone": "50230523916"}, {"name": "José Juan Padilla Solis", "phone": "50230524727"}, {"name": "Mario Alberto Cal Campos", "phone": "50230527762"}, {"name": "Selvin Estuardo Chocooj Yat", "phone": "50230204243"}, {"name": "Hugo Rene Quim Rax", "phone": "50230177164"}, {"name": "Herman Eduardo Sucup Ventura", "phone": "50230519715"}, {"name": "Carlos Danilo Quim Rax", "phone": "50230200001"}, {"name": "Heber Omar Ardon Figueroa", "phone": "50230170764"}, {"name": "Adolfo Coc Coc", "phone": "50230211925"}, {"name": "Oliverio Roman Chiquim", "phone": "50230170583"}, {"name": "Raul Samael Gomez Gamarro", "phone": "50230192801"}, {"name": "Angel Ligorria Mucu", "phone": "50230179721"}, {"name": "Marwin Oswaldo Cu Pop", "phone": "50230184599"}, {"name": "Mynor Gustavo Coc Macz", "phone": "50230183754"}, {"name": "Josue Amilcar Juarez", "phone": "50230524316"}, {"name": "Cesar Arnulfo Ichich Bin", "phone": "50230195789"}, {"name": "Marvin Cac Chacoj", "phone": "50230466685"}, {"name": "Pedro Eduardo Moran Mo", "phone": "50230179610"}, {"name": "Jewinson Johnny Rolando Sierra Fernandez", "phone": "50230176909"}, {"name": "Lender Gabriel de Leon Lopez", "phone": "50230224530"}, {"name": "Jose Antonio Reyes Vega", "phone": "50230114705"}, {"name": "Alvaro Federico Portillo Lopez", "phone": "50230479241"}, {"name": "Oswaldo Abraham Cac Cal", "phone": "50230496626"}, {"name": "Moises Eduardo Miranda Maaz", "phone": "50230175981"}, {"name": "Juan Felipe Tiul Lopez", "phone": "50230199578"}, {"name": "Adrian Jimenez Lopez", "phone": "50230169354"}, {"name": "John Brayan Perez Lopez", "phone": "50230176723"}, {"name": "Mynor Geovanny Tzi Can", "phone": "50230528701"}, {"name": "Gerson Misael Calo Perez", "phone": "50230484754"}, {"name": "Mario Jose Chavez Catalan", "phone": "50230492360"}, {"name": "Carlos Francisco de Paz Medina", "phone": "50230523463"}, {"name": "Yonatan Alexander Perez Reyes", "phone": "50230224253"}, {"name": "Diego Mauricio Gomez Sierra", "phone": "50230528963"}, {"name": "Abner Uwaldo Caal Tzi", "phone": "50230531572"}, {"name": "Marvin Geovany Adqui Luna", "phone": "50230533168"}, {"name": "Genry Gabriel Caal Garcia", "phone": "50230525568"}, {"name": "Cesar Agusto Sierra Cu", "phone": "50230025694"}, {"name": "Bacilio Caal Guerra", "phone": "50230022843"}, {"name": "Ricardo Estuardo Contreras Sican", "phone": "50230184926"}, {"name": "Allan Alexander Cacao Chub", "phone": "50230203815"}, {"name": "Jefferson Eduardo Ixtecoc Sarpec", "phone": "50230573441"}, {"name": "Santos Ruiz Lopez", "phone": "50230180726"}, {"name": "Edson Mollinedo", "phone": "50235835615"}];
-let extraContacts = [];
-try{ extraContacts = JSON.parse(localStorage.getItem('amanecer_extra_contacts') || '[]'); }catch(e){ extraContacts = []; }
-let CONTACTS = BASE_CONTACTS.concat(extraContacts);
+let extraContacts = []; // ya no se usa por separado, se mantiene solo por compatibilidad
+let CONTACTS = [];
+try{
+  const saved = JSON.parse(localStorage.getItem('amanecer_contacts_v2') || 'null');
+  CONTACTS = saved && saved.length ? saved : BASE_CONTACTS.slice();
+}catch(e){
+  CONTACTS = BASE_CONTACTS.slice();
+}
+function persistContacts(){
+  localStorage.setItem('amanecer_contacts_v2', JSON.stringify(CONTACTS));
+}
 const PENDIENTES = ["Haroldo Chun Mendez", "Carlos Rene Higueros Ruiz", "Denis Eliseo Chaman Cucul", "Domingo Felipe Lancerio", "Erickson Waldemar Chocooj", "Erlin Styb Fernandez Catalan", "Francisco Javier Guerra Cu", "José Juan Padilla Solis", "Mario Alberto Cal Campos", "Selvin Estuardo Chocooj Yat", "Hugo Rene Quim Rax", "Herman Eduardo Sucup Ventura", "Carlos Danilo Quim Rax", "Heber Omar Ardon Figueroa", "Adolfo Coc Coc", "Oliverio Roman Chiquim", "Raul Samael Gomez Gamarro", "Angel Ligorria Mucu", "Marwin Oswaldo Cu Pop", "Mynor Gustavo Coc Macz", "Josue Amilcar Juarez", "Cesar Arnulfo Ichich Bin", "Marvin Cac Chacoj", "Pedro Eduardo Moran Mo", "Jewinson Johnny Rolando Sierra Fernandez", "Lender Gabriel de Leon Lopez", "Jose Antonio Reyes Vega", "Alvaro Federico Portillo Lopez", "Oswaldo Abraham Cac Cal", "Moises Eduardo Miranda Maaz", "Juan Felipe Tiul Lopez", "Adrian Jimenez Lopez", "John Brayan Perez Lopez", "Mynor Geovanny Tzi Can", "Gerson Misael Calo Perez", "Mario Jose Chavez Catalan", "Carlos Francisco de Paz Medina", "Yonatan Alexander Perez Reyes", "Diego Mauricio Gomez Sierra", "Abner Uwaldo Caal Tzi", "Marvin Geovany Adqui Luna", "Genry Gabriel Caal Garcia", "Cesar Agusto Sierra Cu", "Bacilio Caal Guerra", "Ricardo Estuardo Contreras Sican", "Allan Alexander Cacao Chub", "Jefferson Eduardo Ixtecoc Sarpec", "Santos Ruiz Lopez", "Edson Mollinedo"];
 const FORM_BASE = "https://emollinedo2020-code.github.io/amanecer-seguro/index.html";
 const NAME_ENTRY = "nombre";
@@ -415,21 +439,76 @@ function saveDayMessages(){
   toggleDayEditor();
 }
 
-/* ---------------- agregar contacto ---------------- */
+/* ---------------- gestor de contactos (agregar / editar / eliminar) ---------------- */
 function addContact(){
   const name = document.getElementById('newName').value.trim();
   const phone = document.getElementById('newPhone').value.trim().replace(/[^0-9]/g,'');
   if(!name || phone.length < 8){ toast('Escribe nombre y teléfono válidos'); return; }
-  extraContacts.push({name, phone});
-  localStorage.setItem('amanecer_extra_contacts', JSON.stringify(extraContacts));
-  CONTACTS = BASE_CONTACTS.concat(extraContacts);
+  CONTACTS.push({name, phone});
+  persistContacts();
   document.getElementById('newName').value=''; document.getElementById('newPhone').value='';
   toast(`${name} agregado`);
-  renderContacts(); renderContactsRisk();
+  renderContacts(); renderContactsRisk(); renderContactManager();
+}
+
+let editingIndex = null;
+
+function renderContactManager(){
+  const q = (document.getElementById('contactSearch').value || '').toLowerCase().trim();
+  document.getElementById('contactCount').textContent = `(${CONTACTS.length} en total)`;
+  const list = document.getElementById('contactManagerList');
+  const entries = CONTACTS.map((c,i)=>({...c, idx:i})).filter(c => !q || c.name.toLowerCase().includes(q));
+
+  if(!entries.length){
+    list.innerHTML = '<div class="empty-row">No se encontraron contactos.</div>';
+    return;
+  }
+
+  list.innerHTML = entries.map(c=>{
+    if(editingIndex === c.idx){
+      return `<div class="mgmt-edit-row">
+        <input class="name-input" id="editName${c.idx}" value="${c.name.replace(/"/g,'&quot;')}">
+        <input class="phone-input" id="editPhone${c.idx}" value="${c.phone}">
+        <button class="btn-primary btn-sm" onclick="saveEditContact(${c.idx})">Guardar</button>
+        <button class="btn-ghost btn-sm" onclick="cancelEditContact()">Cancelar</button>
+      </div>`;
+    }
+    return `<div class="mgmt-row">
+      <div class="mgmt-info"><div class="mgmt-name">${c.name}</div><div class="mgmt-phone">${c.phone}</div></div>
+      <div class="mgmt-actions">
+        <button class="btn-ghost" onclick="startEditContact(${c.idx})">✏️</button>
+        <button class="btn-ghost" onclick="deleteContact(${c.idx})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function startEditContact(idx){ editingIndex = idx; renderContactManager(); }
+function cancelEditContact(){ editingIndex = null; renderContactManager(); }
+
+function saveEditContact(idx){
+  const name = document.getElementById('editName'+idx).value.trim();
+  const phone = document.getElementById('editPhone'+idx).value.trim().replace(/[^0-9]/g,'');
+  if(!name || phone.length < 8){ toast('Nombre o teléfono inválido'); return; }
+  CONTACTS[idx] = { name, phone };
+  persistContacts();
+  editingIndex = null;
+  toast('Contacto actualizado');
+  renderContactManager(); renderContacts(); renderContactsRisk();
+}
+
+function deleteContact(idx){
+  const c = CONTACTS[idx];
+  if(!confirm(`¿Eliminar a ${c.name} de la lista?`)) return;
+  CONTACTS.splice(idx,1);
+  persistContacts();
+  toast('Contacto eliminado');
+  renderContactManager(); renderContacts(); renderContactsRisk();
 }
 
 applyTodayMessage();
 renderContactsRisk();
+renderContactManager();
 
 /* ---------------- datos en vivo desde la Hoja de respuestas ---------------- */
 const SHEET_ID = "19ZG_691yd6AWbIxlGX-CjGVJRjSCs-Zc3YNPw5WWQ-M";
